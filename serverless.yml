@@ -9,7 +9,7 @@ provider:
 
 functions:
   hello:
-    handler: dist/app.handler
+    handler: scraper-service/dist/app.handler
     events:
       - http: ANY /
       - http: ANY /{proxy+}

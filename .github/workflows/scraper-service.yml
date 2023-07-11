@@ -12,9 +12,15 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
+        dir: ['scraper-service']
     steps:
 
     - uses: actions/checkout@v2
+
+    - name: Do something with the matrix value
+      working-directory: ${{ matrix.dir }}
+      run: pwd
+      
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:

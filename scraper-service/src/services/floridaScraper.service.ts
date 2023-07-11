@@ -1,5 +1,4 @@
-import chromium from "chrome-aws-lambda";
-import { ElementHandle } from "puppeteer-core";
+import puppeteer, { ElementHandle } from "puppeteer";
 
 interface PropertyData {
     Name: string;
@@ -25,13 +24,7 @@ interface nextPagePromise {
 export const floridaScraper = (propertyName: string) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const browser = await chromium.puppeteer.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            });
+            const browser = await puppeteer.launch({ headless: true });
 
             const page = await browser.newPage();
 
@@ -132,7 +125,7 @@ export const floridaScraper = (propertyName: string) => {
             await browser.close();
             resolve(propertyData);
         }
-        catch(err) {
+        catch (err) {
             console.log(err)
             reject([])
         }

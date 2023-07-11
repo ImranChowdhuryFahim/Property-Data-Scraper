@@ -9,10 +9,12 @@ jobs:
   deploy:
     name: deploy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scraper-service
     strategy:
       matrix:
         node-version: [18.x]
-        dir: ['scraper-service']
     steps:
 
     - uses: actions/checkout@v2
@@ -23,16 +25,13 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Install dependencies
-      working-directory: ${{ matrix.dir }}
       run: yarn
 
     - name: Rebuild the dist/ directory
-      working-directory: ${{ matrix.dir }}
       run: |
         yarn build
 
     - name: serverless deploy
-      working-directory: ${{ matrix.dir }}
       uses: serverless/github-action@master
       with:
         args: deploy

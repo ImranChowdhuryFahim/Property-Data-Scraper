@@ -8,6 +8,10 @@ on:
 jobs:
   deploy:
     name: deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scraper-service
     steps:
 
     - uses: actions/checkout@v2

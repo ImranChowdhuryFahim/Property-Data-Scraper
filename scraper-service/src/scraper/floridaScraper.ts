@@ -26,7 +26,6 @@ export const floridaScraper = (propertyName: string) => {
                 args: [
                     "--disable-setuid-sandbox",
                     "--no-sandbox",
-                    // "--single-process",
                     "--no-zygote",
                 ],
                 executablePath: puppeteer.executablePath(),

@@ -10,7 +10,7 @@ provider:
 functions:
   hello:
     handler: scraper-service/dist/app.handler
-    memorySize: 2048
+    memorySize: 3000
     timeout: 60
     events:
       - http: ANY /

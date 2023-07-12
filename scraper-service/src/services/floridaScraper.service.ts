@@ -127,12 +127,12 @@ export const floridaScraper = (propertyName: string) => {
                 return data;
             });
 
-            for (let property of propertyData) {
-                const { county, map } = await nextPagePromise(property.nextPageLink as string);
-                property.County = county;
-                property.Map = map;
-                delete property.nextPageLink;
-            }
+            // for (let property of propertyData) {
+            //     const { county, map } = await nextPagePromise(property.nextPageLink as string);
+            //     property.County = county;
+            //     property.Map = map;
+            //     delete property.nextPageLink;
+            // }
 
             await browser.close();
             resolve(propertyData);

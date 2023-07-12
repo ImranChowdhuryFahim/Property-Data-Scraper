@@ -43,24 +43,24 @@ export const floridaScraper = (propertyName: string) => {
             await page.goto('https://quality.healthfinder.fl.gov/facilitylocator/FacilitySearch.aspx');
 
 
-            const providerTypeSelector = '#ctl00_mainContentPlaceHolder_FacilityType';
-            await page.waitForSelector(providerTypeSelector);
-            await page.focus(providerTypeSelector);
-            await page.select(providerTypeSelector, 'ALL');
+            // const providerTypeSelector = '#ctl00_mainContentPlaceHolder_FacilityType';
+            // await page.waitForSelector(providerTypeSelector);
+            // await page.focus(providerTypeSelector);
+            // await page.select(providerTypeSelector, 'ALL');
 
 
-            const nameInputFieldSelector = '#ctl00_mainContentPlaceHolder_FacilityName';
-            await page.focus(nameInputFieldSelector);
-            await page.type(nameInputFieldSelector, propertyName);
+            // const nameInputFieldSelector = '#ctl00_mainContentPlaceHolder_FacilityName';
+            // await page.focus(nameInputFieldSelector);
+            // await page.type(nameInputFieldSelector, propertyName);
 
 
-            const searchbuttonSelector = '#ctl00_mainContentPlaceHolder_SearchButton';
-            await page.waitForSelector(searchbuttonSelector);
-            const searchButton: ElementHandle = await page.$(searchbuttonSelector) as ElementHandle;
-            await searchButton.click();
+            // const searchbuttonSelector = '#ctl00_mainContentPlaceHolder_SearchButton';
+            // await page.waitForSelector(searchbuttonSelector);
+            // const searchButton: ElementHandle = await page.$(searchbuttonSelector) as ElementHandle;
+            // await searchButton.click();
 
 
-            await page.waitForNavigation();
+            // await page.waitForNavigation();
 
 
             const nextPagePromise = (url: string) => {
@@ -104,28 +104,28 @@ export const floridaScraper = (propertyName: string) => {
                 })
             }
 
-            const propertyData: PropertyData[] = await page.evaluate(() => {
-                const rows: Element[] = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
+            // const propertyData: PropertyData[] = await page.evaluate(() => {
+            //     const rows: Element[] = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
 
-                const data = rows.map((row: Element) => {
-                    const url: string = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
+            //     const data = rows.map((row: Element) => {
+            //         const url: string = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
 
-                    return {
-                        Name: row.getElementsByTagName('td')[0].innerText,
-                        Type: row.getElementsByTagName('td')[1].innerText,
-                        Address: row.getElementsByTagName('td')[2].innerText,
-                        City: row.getElementsByTagName('td')[3].innerText,
-                        State: 'Florida',
-                        'Zip Code': row.getElementsByTagName('td')[5].innerText,
-                        Phone: row.getElementsByTagName('td')[6].innerText,
-                        nextPageLink: row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href,
+            //         return {
+            //             Name: row.getElementsByTagName('td')[0].innerText,
+            //             Type: row.getElementsByTagName('td')[1].innerText,
+            //             Address: row.getElementsByTagName('td')[2].innerText,
+            //             City: row.getElementsByTagName('td')[3].innerText,
+            //             State: 'Florida',
+            //             'Zip Code': row.getElementsByTagName('td')[5].innerText,
+            //             Phone: row.getElementsByTagName('td')[6].innerText,
+            //             nextPageLink: row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href,
 
-                        Capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
-                    }
-                });
+            //             Capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
+            //         }
+            //     });
 
-                return data;
-            });
+            //     return data;
+            // });
 
             // for (let property of propertyData) {
             //     const { county, map } = await nextPagePromise(property.nextPageLink as string);
@@ -135,7 +135,7 @@ export const floridaScraper = (propertyName: string) => {
             // }
 
             await browser.close();
-            resolve(propertyData);
+            resolve({});
         }
         catch (err) {
             console.log(err)

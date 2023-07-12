@@ -1,4 +1,7 @@
-import puppeteer, { ElementHandle } from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import PuppeteerExtra from "puppeteer-extra";
+import stealthPlugin from 'puppeteer-extra-plugin-stealth'
+import { ElementHandle } from "puppeteer";
 
 interface PropertyData {
     Name: string;
@@ -24,7 +27,16 @@ interface nextPagePromise {
 export const floridaScraper = (propertyName: string) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const browser = await puppeteer.launch({ headless: true });
+            PuppeteerExtra.use(stealthPlugin());
+
+
+            const browser = await PuppeteerExtra.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            });
 
             const page = await browser.newPage();
 

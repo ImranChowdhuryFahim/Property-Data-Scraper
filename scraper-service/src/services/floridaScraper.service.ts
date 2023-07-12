@@ -1,7 +1,4 @@
-import chromium from "@sparticuz/chromium";
-import PuppeteerExtra from "puppeteer-extra";
-import stealthPlugin from 'puppeteer-extra-plugin-stealth'
-import { ElementHandle } from "puppeteer";
+import chromium = require("chrome-aws-lambda");
 
 interface PropertyData {
     Name: string;
@@ -26,21 +23,34 @@ interface nextPagePromise {
 
 export const floridaScraper = (propertyName: string) => {
     return new Promise(async (resolve, reject) => {
+        let result = null;
         try {
-            PuppeteerExtra.use(stealthPlugin());
-
-
-            const browser = await PuppeteerExtra.launch({
+            const browser = await chromium.puppeteer.launch({
                 args: chromium.args,
                 defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
+                executablePath: await chromium.executablePath,
                 headless: chromium.headless,
                 ignoreHTTPSErrors: true,
             });
 
-            const page = await browser.newPage();
+            let page = await browser!.newPage();
 
-            await page.goto('https://quality.healthfinder.fl.gov/facilitylocator/FacilitySearch.aspx');
+            await page.goto('https://example.com');
+
+            result = await page.title();
+
+
+            // const browser = await PuppeteerExtra.launch({
+            //     args: chromium.args,
+            //     defaultViewport: chromium.defaultViewport,
+            //     executablePath: await chromium.executablePath(),
+            //     headless: chromium.headless,
+            //     ignoreHTTPSErrors: true,
+            // });
+
+            // const page = await browser.newPage();
+
+            // await page.goto('https://quality.healthfinder.fl.gov/facilitylocator/FacilitySearch.aspx');
 
 
             // const providerTypeSelector = '#ctl00_mainContentPlaceHolder_FacilityType';
@@ -63,46 +73,46 @@ export const floridaScraper = (propertyName: string) => {
             // await page.waitForNavigation();
 
 
-            const nextPagePromise = (url: string) => {
-                return new Promise<nextPagePromise>(async (resolve, reject) => {
-                    try {
-                        const newPage = await browser.newPage();
-                        await newPage.goto(url);
+            // const nextPagePromise = (url: string) => {
+            //     return new Promise<nextPagePromise>(async (resolve, reject) => {
+            //         try {
+            //             const newPage = await browser.newPage();
+            //             await newPage.goto(url);
 
-                        const countyInfoSelector = '#ctl00_mainContentPlaceHolder_lblStreetCountyText';
-                        const mapSelector = '#ctl00_mainContentPlaceHolder_mapIframe';
-                        await newPage.waitForSelector(countyInfoSelector);
-                        await newPage.waitForSelector(mapSelector);
+            //             const countyInfoSelector = '#ctl00_mainContentPlaceHolder_lblStreetCountyText';
+            //             const mapSelector = '#ctl00_mainContentPlaceHolder_mapIframe';
+            //             await newPage.waitForSelector(countyInfoSelector);
+            //             await newPage.waitForSelector(mapSelector);
 
 
-                        const { county, map }: nextPagePromise = await newPage.evaluate(() => {
-                            let county, map;
-                            try {
-                                county = document.querySelectorAll('#ctl00_mainContentPlaceHolder_lblStreetCounty')[0].textContent!;
-                            }
-                            catch (err) {
-                                county = '';
-                            }
+            //             const { county, map }: nextPagePromise = await newPage.evaluate(() => {
+            //                 let county, map;
+            //                 try {
+            //                     county = document.querySelectorAll('#ctl00_mainContentPlaceHolder_lblStreetCounty')[0].textContent!;
+            //                 }
+            //                 catch (err) {
+            //                     county = '';
+            //                 }
 
-                            try {
-                                map = (document.querySelectorAll('#ctl00_mainContentPlaceHolder_mapIframe')[0] as HTMLIFrameElement).src as string;
-                            }
-                            catch (err) {
-                                map = '';
-                            }
+            //                 try {
+            //                     map = (document.querySelectorAll('#ctl00_mainContentPlaceHolder_mapIframe')[0] as HTMLIFrameElement).src as string;
+            //                 }
+            //                 catch (err) {
+            //                     map = '';
+            //                 }
 
-                            return { county, map };
-                        })
+            //                 return { county, map };
+            //             })
 
-                        resolve({ county, map });
-                    }
-                    catch (error) {
+            //             resolve({ county, map });
+            //         }
+            //         catch (error) {
 
-                        reject({});
-                    }
+            //             reject({});
+            //         }
 
-                })
-            }
+            //     })
+            // }
 
             // const propertyData: PropertyData[] = await page.evaluate(() => {
             //     const rows: Element[] = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
@@ -135,7 +145,7 @@ export const floridaScraper = (propertyName: string) => {
             // }
 
             await browser.close();
-            resolve({});
+            resolve(result);
         }
         catch (err) {
             console.log(err)

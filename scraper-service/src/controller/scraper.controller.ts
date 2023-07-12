@@ -7,10 +7,10 @@ class ScraperController {
         res.status(200).json(result);
     }
 
-    async getTexasScraper(req: Request, res: Response) {
-        const result = await scraper.texasScraper('');
-        res.status(200).json(result);
-    }
+    // async getTexasScraper(req: Request, res: Response) {
+    //     const result = await scraper.texasScraper('');
+    //     res.status(200).json(result);
+    // }
 }
 
 export default new ScraperController();

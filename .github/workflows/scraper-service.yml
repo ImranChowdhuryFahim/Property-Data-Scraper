@@ -30,9 +30,9 @@ jobs:
           #Now we have got the access of EC2 and we will start the deploy .
 
           cd /home/ubuntu/scraper-service &&
-          git checkout master &&
+          git checkout scraper-service &&
           git fetch --all &&
-          git reset --hard origin/master &&
-          git pull origin master &&
+          git reset --hard origin/scraper-service &&
+          git pull origin scraper-service &&
           docker-compose -f docker-compose.yml up -d --build 
           '

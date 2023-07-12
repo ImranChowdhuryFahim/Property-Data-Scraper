@@ -1,14 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { scraper } from "../services";
+import { scraper } from "../scraper";
+import scraperService from "../services/scraper.service";
 
 class ScraperController {
-    async getFloridaScraper(req: Request, res: Response, next: NextFunction) {
-        const result = await scraper.floridaScraper('Banyan Place');
-        res.status(200).json(result);
-    }
-
-    async getTexasScraper(req: Request, res: Response) {
-        const result = await scraper.texasScraper('');
+    async scrape(req: Request, res: Response) {
+        const result = await scraperService.scrape();
         res.status(200).json(result);
     }
 }

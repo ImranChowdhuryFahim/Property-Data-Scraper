@@ -6,8 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "puppeteer": "^20.8.1",
-    "serverless-http": "^3.2.0"
+    "puppeteer": "^20.8.1"
   },
   "scripts": {
     "start": "ts-node server.ts",

@@ -1,30 +1,34 @@
 import puppeteer from "puppeteer";
+import { PropertyData } from "../interfaces";
 
-interface PropertyData {
-    Name: string;
-    Address: string;
-    City: string;
-    'Zip Code': string;
-    County: string;
-    Type: string;
-    State: string;
-    Capacity: number;
+interface FirstPageData {
+    name: string;
+    address: string;
+    city: string;
+    'zip code': string;
+    county: string;
+    type: string;
+    state: string;
     nextLink?: string;
-    Phone?: string;
-    Map?: String;
+}
+interface NextPageData {
+    capacity: number;
+    phone: string;
 }
 
-interface Bundle {
-    capacity?: number;
-    phone?: string;
-    map?: string;
-}
 
 export const texasScraper = (propertyName: string) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise<PropertyData[]>(async (resolve, reject) => {
         try {
             const browser = await puppeteer.launch({
-                headless: true
+                args: [
+                    "--disable-setuid-sandbox",
+                    "--no-sandbox",
+                    "--single-process",
+                    "--no-zygote",
+                ],
+                executablePath: puppeteer.executablePath(),
+                headless: "new",
             });
 
             const page = await browser.newPage();
@@ -51,8 +55,10 @@ export const texasScraper = (propertyName: string) => {
 
             await page.waitForNavigation();
 
+            const propertyData: PropertyData[] = [];
+
             const nextPagePromise = (url: string) => {
-                return new Promise<Bundle>(async (resolve, reject) => {
+                return new Promise<NextPageData>(async (resolve, reject) => {
                     try {
                         const newPage = await browser.newPage();
                         await newPage.goto(url);
@@ -63,8 +69,8 @@ export const texasScraper = (propertyName: string) => {
 
                         await newPage.click(generalTabSelector);
 
-                        const { capacity, phone, map }: Bundle = await newPage.evaluate(() => {
-                            let capacity, phone, map;
+                        const { capacity, phone }: NextPageData = await newPage.evaluate(() => {
+                            let capacity, phone;
                             try {
                                 const lineContainingCapacityValue = document.querySelectorAll('div[class="p7TP3_content_07 p7TP3content current-panel"]')[0]
                                     .querySelectorAll('ul > li')[1].textContent
@@ -82,22 +88,13 @@ export const texasScraper = (propertyName: string) => {
                             catch (err) {
                                 phone = '';
                             }
-
-                            try {
-                                map = document.querySelectorAll('p')[0].getElementsByTagName('a')[0].href;
-                            }
-                            catch (err) {
-                                map = ''
-                            }
-
-
-                            return { capacity, phone, map };
+                            return { capacity, phone };
                         })
 
-                        resolve({ capacity, phone, map } as Bundle);
+                        resolve({ capacity, phone });
                     }
                     catch (error) {
-                        reject({} as Bundle);
+                        reject({});
                     }
 
                 })
@@ -105,21 +102,20 @@ export const texasScraper = (propertyName: string) => {
 
 
 
-            const propertyData: PropertyData[] = await page.evaluate(() => {
+            const firstPageData: FirstPageData[] = await page.evaluate(() => {
                 const rows: Element[] = Array.from(document.querySelectorAll('table.sortabletable > tbody > tr'))
 
                 const data = rows.map((row: Element) => {
                     const url: string = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
 
                     return {
-                        Name: row.getElementsByTagName('td')[0].innerText,
-                        Address: row.getElementsByTagName('td')[1].innerText,
-                        City: row.getElementsByTagName('td')[2].innerText,
-                        'Zip Code': row.getElementsByTagName('td')[3].innerText,
-                        County: row.getElementsByTagName('td')[4].innerText,
-                        Type: row.getElementsByTagName('td')[5].innerText,
-                        State: 'Texas',
-                        Capacity: 0,
+                        name: row.getElementsByTagName('td')[0].innerText,
+                        address: row.getElementsByTagName('td')[1].innerText,
+                        city: row.getElementsByTagName('td')[2].innerText,
+                        'zip code': row.getElementsByTagName('td')[3].innerText,
+                        county: row.getElementsByTagName('td')[4].innerText,
+                        type: row.getElementsByTagName('td')[5].innerText,
+                        state: 'Texas',
                         nextLink: url,
                     }
                 });
@@ -128,16 +124,11 @@ export const texasScraper = (propertyName: string) => {
             });
 
 
-            for (let property of propertyData) {
-                const { capacity, phone, map } = await nextPagePromise(property.nextLink!);
-                property.Capacity = capacity as number;
-                property.Phone = phone;
-                property.Map = map;
+            for (let property of firstPageData) {
+                const { capacity, phone } = await nextPagePromise(property.nextLink!);
                 delete property.nextLink;
+                propertyData.push({ ...property, capacity, phone })
             }
-
-            console.log(propertyData)
-
 
             await browser.close();
 

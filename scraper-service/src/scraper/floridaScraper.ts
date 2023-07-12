@@ -1,28 +1,24 @@
 import puppeteer, { ElementHandle } from "puppeteer";
+import { PropertyData } from "../interfaces";
 
-interface PropertyData {
-    Name: string;
-    Address: string;
-    City: string;
-    'Zip Code': string;
-    County?: string;
-    Type: string;
-    State: string;
-    Capacity: number;
-    Phone: string;
-    Map?: string;
+interface FirstPageData {
+    name: string;
+    address: string;
+    city: string;
+    'zip code': string;
+    type: string;
+    state: string;
+    capacity: number;
+    phone: string;
     nextPageLink?: string;
-
 }
 
-interface nextPagePromise {
+interface NextPageData {
     county: string;
-    map: string;
 }
-
 
 export const floridaScraper = (propertyName: string) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise<PropertyData[]>(async (resolve, reject) => {
         try {
 
 
@@ -33,9 +29,8 @@ export const floridaScraper = (propertyName: string) => {
                     "--single-process",
                     "--no-zygote",
                 ],
-                executablePath:
-
-                    puppeteer.executablePath(),
+                executablePath: puppeteer.executablePath(),
+                headless: "new",
             });
 
             const page = await browser.newPage();
@@ -62,9 +57,11 @@ export const floridaScraper = (propertyName: string) => {
 
             await page.waitForNavigation();
 
+            const propertyData: PropertyData[] = [];
+
 
             const nextPagePromise = (url: string) => {
-                return new Promise<nextPagePromise>(async (resolve, reject) => {
+                return new Promise<NextPageData>(async (resolve, reject) => {
                     try {
                         const newPage = await browser.newPage();
                         await newPage.goto(url);
@@ -75,8 +72,8 @@ export const floridaScraper = (propertyName: string) => {
                         await newPage.waitForSelector(mapSelector);
 
 
-                        const { county, map } = await newPage.evaluate(() => {
-                            let county, map;
+                        const { county } = await newPage.evaluate(() => {
+                            let county;
                             try {
                                 county = document.querySelectorAll('#ctl00_mainContentPlaceHolder_lblStreetCounty')[0].textContent as string;
                             }
@@ -84,17 +81,12 @@ export const floridaScraper = (propertyName: string) => {
                                 county = '';
                             }
 
-                            try {
-                                map = (document.querySelectorAll('#ctl00_mainContentPlaceHolder_mapIframe')[0] as HTMLIFrameElement).src;
-                            }
-                            catch (err) {
-                                map = '';
-                            }
 
-                            return { county, map };
+
+                            return { county };
                         })
 
-                        resolve({ county, map });
+                        resolve({ county });
                     }
                     catch (error) {
 
@@ -104,37 +96,34 @@ export const floridaScraper = (propertyName: string) => {
                 })
             }
 
-            const propertyData: PropertyData[] = await page.evaluate(() => {
+            const firstPageData: FirstPageData[] = await page.evaluate(() => {
                 const rows = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
 
                 const data = rows.map((row) => {
-                    const url = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
-
                     return {
-                        Name: row.getElementsByTagName('td')[0].innerText,
-                        Type: row.getElementsByTagName('td')[1].innerText,
-                        Address: row.getElementsByTagName('td')[2].innerText,
-                        City: row.getElementsByTagName('td')[3].innerText,
-                        State: 'Florida',
-                        'Zip Code': row.getElementsByTagName('td')[5].innerText,
-                        Phone: row.getElementsByTagName('td')[6].innerText,
+                        name: row.getElementsByTagName('td')[0].innerText,
+                        type: row.getElementsByTagName('td')[1].innerText,
+                        address: row.getElementsByTagName('td')[2].innerText,
+                        city: row.getElementsByTagName('td')[3].innerText,
+                        state: 'Florida',
+                        'zip code': row.getElementsByTagName('td')[5].innerText,
+                        phone: row.getElementsByTagName('td')[6].innerText,
                         nextPageLink: row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href,
-
-                        Capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
+                        capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
                     }
                 });
 
                 return data;
             });
 
-            for (let property of propertyData) {
-                const { county, map } = await nextPagePromise(property.nextPageLink as string);
-                property.County = county;
-                property.Map = map;
+
+            for (let property of firstPageData) {
+                const { county } = await nextPagePromise(property.nextPageLink as string);
                 delete property.nextPageLink;
+                propertyData.push({ ...property, county });
+
             }
 
-            console.log(propertyData);
             await browser.close();
             resolve(propertyData);
         }

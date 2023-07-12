@@ -5,12 +5,12 @@
   "author": "Imran Chowdhury",
   "license": "MIT",
   "dependencies": {
-    "chrome-aws-lambda": "^10.1.0",
     "express": "^4.18.2",
-    "puppeteer-core": "^20.8.1",
+    "puppeteer": "^20.8.1",
     "serverless-http": "^3.2.0"
   },
   "scripts": {
+    "start": "ts-node server.ts",
     "dev": "ts-node-dev server.ts",
     "build": "rimraf dist && tsc"
   },

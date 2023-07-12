@@ -1,4 +1,4 @@
-import chromium = require("chrome-aws-lambda");
+import puppeteer, { ElementHandle } from "puppeteer";
 
 interface PropertyData {
     Name: string;
@@ -23,129 +23,120 @@ interface nextPagePromise {
 
 export const floridaScraper = (propertyName: string) => {
     return new Promise(async (resolve, reject) => {
-        let result = null;
         try {
-            const browser = await chromium.puppeteer.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
+
+
+            const browser = await puppeteer.launch({
+                args: [
+                    "--disable-setuid-sandbox",
+                    "--no-sandbox",
+                    "--single-process",
+                    "--no-zygote",
+                ],
+                executablePath:
+
+                    puppeteer.executablePath(),
             });
 
-            let page = await browser!.newPage();
+            const page = await browser.newPage();
 
-            await page.goto('https://example.com');
-
-            result = await page.title();
+            await page.goto('https://quality.healthfinder.fl.gov/facilitylocator/FacilitySearch.aspx');
 
 
-            // const browser = await PuppeteerExtra.launch({
-            //     args: chromium.args,
-            //     defaultViewport: chromium.defaultViewport,
-            //     executablePath: await chromium.executablePath(),
-            //     headless: chromium.headless,
-            //     ignoreHTTPSErrors: true,
-            // });
-
-            // const page = await browser.newPage();
-
-            // await page.goto('https://quality.healthfinder.fl.gov/facilitylocator/FacilitySearch.aspx');
+            const providerTypeSelector = '#ctl00_mainContentPlaceHolder_FacilityType';
+            await page.waitForSelector(providerTypeSelector);
+            await page.focus(providerTypeSelector);
+            await page.select(providerTypeSelector, 'ALL');
 
 
-            // const providerTypeSelector = '#ctl00_mainContentPlaceHolder_FacilityType';
-            // await page.waitForSelector(providerTypeSelector);
-            // await page.focus(providerTypeSelector);
-            // await page.select(providerTypeSelector, 'ALL');
+            const nameInputFieldSelector = '#ctl00_mainContentPlaceHolder_FacilityName';
+            await page.focus(nameInputFieldSelector);
+            await page.type(nameInputFieldSelector, propertyName);
 
 
-            // const nameInputFieldSelector = '#ctl00_mainContentPlaceHolder_FacilityName';
-            // await page.focus(nameInputFieldSelector);
-            // await page.type(nameInputFieldSelector, propertyName);
+            const searchbuttonSelector = '#ctl00_mainContentPlaceHolder_SearchButton';
+            await page.waitForSelector(searchbuttonSelector);
+            const searchButton: ElementHandle = await page.$(searchbuttonSelector) as ElementHandle;
+            await searchButton.click();
 
 
-            // const searchbuttonSelector = '#ctl00_mainContentPlaceHolder_SearchButton';
-            // await page.waitForSelector(searchbuttonSelector);
-            // const searchButton: ElementHandle = await page.$(searchbuttonSelector) as ElementHandle;
-            // await searchButton.click();
+            await page.waitForNavigation();
 
 
-            // await page.waitForNavigation();
+            const nextPagePromise = (url: string) => {
+                return new Promise<nextPagePromise>(async (resolve, reject) => {
+                    try {
+                        const newPage = await browser.newPage();
+                        await newPage.goto(url);
+
+                        const countyInfoSelector = '#ctl00_mainContentPlaceHolder_lblStreetCountyText';
+                        const mapSelector = '#ctl00_mainContentPlaceHolder_mapIframe';
+                        await newPage.waitForSelector(countyInfoSelector);
+                        await newPage.waitForSelector(mapSelector);
 
 
-            // const nextPagePromise = (url: string) => {
-            //     return new Promise<nextPagePromise>(async (resolve, reject) => {
-            //         try {
-            //             const newPage = await browser.newPage();
-            //             await newPage.goto(url);
+                        const { county, map } = await newPage.evaluate(() => {
+                            let county, map;
+                            try {
+                                county = document.querySelectorAll('#ctl00_mainContentPlaceHolder_lblStreetCounty')[0].textContent as string;
+                            }
+                            catch (err) {
+                                county = '';
+                            }
 
-            //             const countyInfoSelector = '#ctl00_mainContentPlaceHolder_lblStreetCountyText';
-            //             const mapSelector = '#ctl00_mainContentPlaceHolder_mapIframe';
-            //             await newPage.waitForSelector(countyInfoSelector);
-            //             await newPage.waitForSelector(mapSelector);
+                            try {
+                                map = (document.querySelectorAll('#ctl00_mainContentPlaceHolder_mapIframe')[0] as HTMLIFrameElement).src;
+                            }
+                            catch (err) {
+                                map = '';
+                            }
 
+                            return { county, map };
+                        })
 
-            //             const { county, map }: nextPagePromise = await newPage.evaluate(() => {
-            //                 let county, map;
-            //                 try {
-            //                     county = document.querySelectorAll('#ctl00_mainContentPlaceHolder_lblStreetCounty')[0].textContent!;
-            //                 }
-            //                 catch (err) {
-            //                     county = '';
-            //                 }
+                        resolve({ county, map });
+                    }
+                    catch (error) {
 
-            //                 try {
-            //                     map = (document.querySelectorAll('#ctl00_mainContentPlaceHolder_mapIframe')[0] as HTMLIFrameElement).src as string;
-            //                 }
-            //                 catch (err) {
-            //                     map = '';
-            //                 }
+                        reject({});
+                    }
 
-            //                 return { county, map };
-            //             })
+                })
+            }
 
-            //             resolve({ county, map });
-            //         }
-            //         catch (error) {
+            const propertyData: PropertyData[] = await page.evaluate(() => {
+                const rows = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
 
-            //             reject({});
-            //         }
+                const data = rows.map((row) => {
+                    const url = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
 
-            //     })
-            // }
+                    return {
+                        Name: row.getElementsByTagName('td')[0].innerText,
+                        Type: row.getElementsByTagName('td')[1].innerText,
+                        Address: row.getElementsByTagName('td')[2].innerText,
+                        City: row.getElementsByTagName('td')[3].innerText,
+                        State: 'Florida',
+                        'Zip Code': row.getElementsByTagName('td')[5].innerText,
+                        Phone: row.getElementsByTagName('td')[6].innerText,
+                        nextPageLink: row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href,
 
-            // const propertyData: PropertyData[] = await page.evaluate(() => {
-            //     const rows: Element[] = Array.from(document.querySelectorAll('table#ctl00_mainContentPlaceHolder_dgFacilities > tbody > tr:not(:first-child)'))
+                        Capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
+                    }
+                });
 
-            //     const data = rows.map((row: Element) => {
-            //         const url: string = row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href;
+                return data;
+            });
 
-            //         return {
-            //             Name: row.getElementsByTagName('td')[0].innerText,
-            //             Type: row.getElementsByTagName('td')[1].innerText,
-            //             Address: row.getElementsByTagName('td')[2].innerText,
-            //             City: row.getElementsByTagName('td')[3].innerText,
-            //             State: 'Florida',
-            //             'Zip Code': row.getElementsByTagName('td')[5].innerText,
-            //             Phone: row.getElementsByTagName('td')[6].innerText,
-            //             nextPageLink: row.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href,
+            for (let property of propertyData) {
+                const { county, map } = await nextPagePromise(property.nextPageLink as string);
+                property.County = county;
+                property.Map = map;
+                delete property.nextPageLink;
+            }
 
-            //             Capacity: parseInt(row.getElementsByTagName('td')[7].innerText),
-            //         }
-            //     });
-
-            //     return data;
-            // });
-
-            // for (let property of propertyData) {
-            //     const { county, map } = await nextPagePromise(property.nextPageLink as string);
-            //     property.County = county;
-            //     property.Map = map;
-            //     delete property.nextPageLink;
-            // }
-
+            console.log(propertyData);
             await browser.close();
-            resolve(result);
+            resolve(propertyData);
         }
         catch (err) {
             console.log(err)

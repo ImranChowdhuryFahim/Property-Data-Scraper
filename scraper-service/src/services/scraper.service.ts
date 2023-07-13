@@ -4,8 +4,8 @@ import { scraper } from "../scraper";
 class ScraperService {
     async scrape() {
         const list: DataTobeScraped[] = [
-            { name: 'Brookdale Creekside', state: 'Texas' }
-            , { name: 'The Delaney At Georgetown Village', state: 'Texas' },
+            // { name: 'Brookdale Creekside', state: 'Texas' }
+            // , { name: 'The Delaney At Georgetown Village', state: 'Texas' },
             { name: 'The Isle At Watermere', state: 'Florida' }
             // , { name: 'Emerald Park of Hollywood', state: 'Florida' },
             // { name: 'Banyan Place', state: 'Florida' }

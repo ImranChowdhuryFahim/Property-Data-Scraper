@@ -4,8 +4,13 @@ import scraperService from "../services/scraper.service";
 
 class ScraperController {
     async scrape(req: Request, res: Response) {
-        const result = await scraperService.scrape();
-        res.status(200).json(result);
+        try {
+            const result = await scraperService.scrape();
+            res.status(200).json(result);
+        } catch (err) {
+            res.json({ message: (err as Error).message })
+        }
+
     }
 }
 

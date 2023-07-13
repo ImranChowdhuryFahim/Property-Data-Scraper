@@ -134,8 +134,7 @@ export const texasScraper = (propertyName: string) => {
             resolve(propertyData);
         }
         catch (err) {
-            console.log(err)
-            reject([])
+            reject(err)
         }
     })
 

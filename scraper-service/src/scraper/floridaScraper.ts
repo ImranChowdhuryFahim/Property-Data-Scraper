@@ -127,8 +127,7 @@ export const floridaScraper = (propertyName: string) => {
             resolve(propertyData);
         }
         catch (err) {
-            console.log(err)
-            reject([])
+            reject(err)
         }
     })
 

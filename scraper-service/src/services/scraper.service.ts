@@ -20,9 +20,15 @@ class ScraperService {
             }
         }
 
-        const promiseResponse = await Promise.all(promises);
-        const result = ([] as PropertyData[]).concat(...promiseResponse)
-        return result;
+        try {
+            const promiseResponse = await Promise.all(promises);
+            const result = ([] as PropertyData[]).concat(...promiseResponse)
+            return result;
+        } catch (err) {
+            throw Error((err as Error).message);
+        }
+
+
     }
 }
 
